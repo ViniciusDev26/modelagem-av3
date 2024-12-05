@@ -1,72 +1,63 @@
-from ortools.linear_solver import pywraplp
+from ortools.linear_solver.pywraplp import Solver 
 
-class Node:
-    def __init__(self, valor):
-        self.valor = valor
-        self.filhos = []
-
-    def adicionar_filho(self, filho):
-        self.filhos.append(filho)
-
-def create_solver(coeficientes, restricoes):
-    qtd_variaveis = len(coeficientes)
-
-    solver = pywraplp.Solver.CreateSolver('GLOP')
+def create_solver(coefficients, constraints):
+    quantity_variables = len(coefficients)
+    solver = Solver.CreateSolver('GLOP')
     if not solver:
         raise Exception("Solver não disponível.")
 
-    variaveis = []
-    for i in range(qtd_variaveis):
-        variaveis.append(solver.NumVar(0, solver.infinity(), f'x{i+1}'))
+    variables = []
+    for i in range(quantity_variables):
+        variables.append(solver.NumVar(0, solver.infinity(), f'x{i+1}'))
 
-    objetivo = solver.Objective()
-    for i in range(qtd_variaveis):
-        objetivo.SetCoefficient(variaveis[i], coeficientes[i])
-    objetivo.SetMinimization()
+    objective = solver.Objective()
+    for i in range(quantity_variables):
+        objective.SetCoefficient(variables[i], coefficients[i])
+    objective.SetMinimization()
 
-    for restricao in restricoes:
-        coeficientes_restricao, limite = restricao
-        expressao = sum(coeficientes_restricao[i] * variaveis[i] for i in range(len(coeficientes_restricao)))
-        solver.Add(expressao >= limite)
+    for constraint in constraints:
+        constraint_coefficients, limit = constraint
+        expression = sum(constraint_coefficients[i] * variables[i] for i in range(len(constraint_coefficients)))
+        solver.Add(expression >= limit)
 
-    solver.variaveis = variaveis
+    solver.variables = variables
     return solver
 
 def resolve_board(solver, ID):
     status = solver.Solve()
-    if status == pywraplp.Solver.OPTIMAL:
+    if status == Solver.OPTIMAL:
         lower_bound = solver.Objective().Value()
         print(f"Solução encontrada para o nó atual {ID}:")
         result = []
-        for var in solver.variaveis:
+        for var in solver.variables:
             print(f"{var.name()} = {var.solution_value()}")
             result.append(var.solution_value())
         print(f"Valor da função objetivo (limite inferior): {lower_bound}")
 
         return [result, lower_bound]
-    elif status == pywraplp.Solver.INFEASIBLE:
+    elif status == Solver.INFEASIBLE:
         print("Nenhuma solução viável encontrada.")
         return []
 
 
 def principal():
-    coeficientes = [float(6), float(7), float(4)]
-    restricoes = [[[float(4), float(6), float(9)], 45], [[float(8), float(6), float(3)], 46]]
+    coefficients = [float(6), float(7), float(4)]
+    constraints = [[[float(4), float(6), float(9)], 45], [[float(8), float(6), float(3)], 46]]
 
-    solver = create_solver(coeficientes, restricoes)
+    solver = create_solver(coefficients, constraints)
     initial_result = resolve_board(solver, 1)
     root_node = Node(initial_result)
-    print(root_node.valor)
+    print(root_node.value)
     solve_problem(solver, root_node)
 
 def solve_problem(solver, node, node_counter = 1):
     global_ub = float('inf')
     node_counter += 1
 
-    if not node.valor:
+    if not node.value:
         return
 
-    result, lower_bound = node.valor
+    result, lower_bound = node.value
     if lower_bound >= global_ub:
         print(f"Poda por qualidade: limite inferior {lower_bound} >= limite superior global {global_ub}")
 
@@ -82,24 +73,32 @@ def solve_problem(solver, node, node_counter = 1):
     print("Realizando ramificação...")
     for i, value in enumerate(result):
         if not value.is_integer():
-            solver.Add(solver.variaveis[i] >= int(value) + 1)
+            solver.Add(solver.variables[i] >= int(value) + 1)
 
     node = Node(resolve_board(solver, node_counter))
     node_counter += 1
-    node.adicionar_filho(node)
+    node.add_child(node)
 
-    for child in node.filhos:
+    for child in node.children:
         solve_problem(solver, child, node_counter)
     
 
-def imprimir_em_ordem_generica(no, nivel=0):
-    if not no.filhos:
-        print(no.valor, end=" ")
+def print_in_generic_order(no, level=0):
+    if not no.children:
+        print(no.value, end=" ")
     else:
         for i, filho in enumerate(no.filhos):
-            if i == len(no.filhos) // 2:
-                print(no.valor, end=" ")
-            imprimir_em_ordem_generica(filho)
+            if i == len(no.children) // 2:
+                print(no.value, end=" ")
+            print_in_generic_order(filho)
+
+class Node:
+    def __init__(self, value):
+        self.value = value
+        self.children = []
+
+    def add_child(self, filho):
+        self.children.append(filho)
 
 if __name__ == "__main__":
     principal()
