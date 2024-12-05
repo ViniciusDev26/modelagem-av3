@@ -78,6 +78,22 @@ def branch_and_bound(coefficients, constraints):
     return best_solution, best_value
 
 def main():
+    num_constraints = int(input("Informe o número de restrições: "))
+    print("Informe os coeficientes da função objetivo (separados por espaço):")
+    coefficients = list(map(float, input().split()))
+
+    # Entrada: restrições
+    constraints = []
+    for i in range(num_constraints):
+        print(f"Informe os coeficientes da restrição {i+1} (separados por espaço):")
+        constraint_coefficients = list(map(float, input().split()))
+        limite = float(input(f"Informe o termo independente da restrição {i+1}: "))
+        constraints.append((constraint_coefficients, limite))
+
+    result = branch_and_bound(coefficients, constraints)
+    print(result)
+
+def main_filled():
     coefficients = [float(6), float(7), float(4)]
     constraints = [[[float(4), float(6), float(9)], 45], [[float(8), float(6), float(3)], 46]]
 
