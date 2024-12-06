@@ -1,5 +1,4 @@
 from ortools.linear_solver.pywraplp import Solver
-import time
 
 def create_solver(coefficients, constraints):
     solver = Solver.CreateSolver('GLOP')
@@ -41,8 +40,6 @@ def branch_and_bound(coefficients, constraints):
         state = stack.pop()
         current_constraints = state["constraints"]
         bounds = state["bounds"]
-
-        time.sleep(1)
 
         solver, variables = create_solver(coefficients, current_constraints + bounds)
         result, limit = solver_output(solver, variables)
