@@ -33,7 +33,7 @@ def first_non_integer(lst):
 
 def branch_and_bound(coefficients, constraints):
     # Inicializa a pilha com estados definidos apenas pelos dados necessários
-    stack = [{"id": 1, "constraints": constraints, "bounds": []}]
+    stack = [{"constraints": constraints, "bounds": []}]
     best_solution = None
     best_value = float('inf')
 
@@ -47,11 +47,13 @@ def branch_and_bound(coefficients, constraints):
         solver, variables = create_solver(coefficients, current_constraints + bounds)
         result, limit = solver_output(solver, variables)
 
-        print(f"\nSolução encontrada para o nó {state['id']}:")
+        print("-" * 50)
+        print(f"\nSolução encontrada para o nó atual:")
         print(result, limit)
 
         if not result:
             print(f"Poda por inviabilidade: Nenhuma solução viável encontrada.")
+            print("-" * 50)
             continue
         if limit >= best_value: # Poda por qualidade
             print(f"Poda por qualidade: limite inferior {limit} >= limite superior global {best_value}")
@@ -71,9 +73,11 @@ def branch_and_bound(coefficients, constraints):
         left_bound = [([-1 if i == index else 0 for i in range(len(coefficients))], -(value // 1))]
         right_bound = [([1 if i == index else 0 for i in range(len(coefficients))], value // 1 + 1)]
 
+        print("-" * 50)
+
         # Adiciona à pilha os novos estados
-        stack.append({"id": state["id"] + 1, "constraints": current_constraints, "bounds": bounds + left_bound})
-        stack.append({"id": state["id"] + 2, "constraints": current_constraints, "bounds": bounds + right_bound})
+        stack.append({"constraints": current_constraints, "bounds": bounds + left_bound})
+        stack.append({"constraints": current_constraints, "bounds": bounds + right_bound})
 
     return best_solution, best_value
 
@@ -91,14 +95,14 @@ def main():
         constraints.append((constraint_coefficients, limite))
 
     result = branch_and_bound(coefficients, constraints)
-    print(result)
+    print("Melhor resultado:", result)
 
 def main_filled():
     coefficients = [float(6), float(7), float(4)]
     constraints = [[[float(4), float(6), float(9)], 45], [[float(8), float(6), float(3)], 46]]
 
     result = branch_and_bound(coefficients, constraints)
-    print(result)
+    print("Melhor resultado:", result)
 
 if __name__ == "__main__":
     main()
